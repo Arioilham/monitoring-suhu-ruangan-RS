@@ -327,6 +327,7 @@ class ExcelExportData implements FromArray, WithStyles
             $start = $range['start'];
             $end = $range['end'];
             $endCol = $range['endCol'];
+            
             if ($start <= $end) {
                 // Borders
                 $sheet->getStyle("A$start:$endCol$end")->applyFromArray([
@@ -342,6 +343,16 @@ class ExcelExportData implements FromArray, WithStyles
                 if ($endCol == 'G') {
                     $sheet->getStyle("B$start:D$end")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
                     $sheet->getStyle("G$start:G$end")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+                    // Conditional Styling for Status Column (Column D)
+                    for ($i = $start; $i <= $end; $i++) {
+                        $statusValue = $sheet->getCell("D$i")->getValue();
+                        if ($statusValue === 'Panas') {
+                            $sheet->getStyle("D$i")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_RED))->setBold(true);
+                        } elseif ($statusValue === 'Dingin') {
+                            $sheet->getStyle("D$i")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_BLUE))->setBold(true);
+                        }
+                    }
                 }
             }
         }
