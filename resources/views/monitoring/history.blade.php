@@ -210,7 +210,15 @@
             </thead>
             <tbody>
                 @forelse($monitorings as $monitoring)
-                <tr class="{{ in_array($monitoring->status, ['Panas', 'Dingin']) ? 'table-danger' : '' }}">
+                @php
+                    $rowClass = '';
+                    if ($monitoring->status === 'Panas') {
+                        $rowClass = 'table-danger';
+                    } elseif ($monitoring->status === 'Dingin') {
+                        $rowClass = 'table-primary';
+                    }
+                @endphp
+                <tr class="{{ $rowClass }}">
                     <td>
                         <span class="badge px-2 py-1 rounded-2" style="background-color: {{ $monitoring->temperature < 28 || $monitoring->temperature > 30 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)' }}; color: {{ $monitoring->temperature < 28 || $monitoring->temperature > 30 ? '#ef4444' : '#10b981' }}; border: 1px solid {{ $monitoring->temperature < 28 || $monitoring->temperature > 30 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)' }}">
                             {{ number_format($monitoring->temperature, 2) }}
