@@ -1,13 +1,13 @@
 @extends('layouts.main')
 
-@section('title', 'Export Laporan - Sistem Monitoring Suhu Bayi')
+@section('title', 'Export Laporan - Sistem Monitoring Suhu Ruangan Bayi')
 
 @section('content')
 <div class="container-fluid py-4 reports-container">
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="h3">📊 Export Laporan Monitoring</h1>
-            <p class="text-muted">Unduh laporan monitoring dalam format PDF atau Excel untuk keperluan dokumentasi medis</p>
+            <p class="text-muted">Unduh laporan monitoring kondisi ruangan bayi dalam format PDF atau Excel untuk keperluan dokumentasi medis</p>
         </div>
     </div>
 

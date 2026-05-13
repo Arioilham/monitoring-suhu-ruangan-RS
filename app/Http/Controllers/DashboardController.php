@@ -25,7 +25,7 @@ class DashboardController extends Controller
 
         // Count status
         $safeCount = $latestMonitorings->where('status', 'Aman')->count();
-        $unsafeCount = $latestMonitorings->where('status', 'Tidak Aman')->count();
+        $unsafeCount = $latestMonitorings->whereIn('status', ['Panas', 'Dingin'])->count();
 
         // Check emergency conditions
         $emergencyDevices = [];
@@ -68,7 +68,7 @@ class DashboardController extends Controller
                     'avg_humidity' => round($deviceMonitorings->avg('humidity'), 2),
                     'max_humidity' => $deviceMonitorings->max('humidity'),
                     'min_humidity' => $deviceMonitorings->min('humidity'),
-                    'unsafe_count' => $deviceMonitorings->where('status', 'Tidak Aman')->count(),
+                    'unsafe_count' => $deviceMonitorings->whereIn('status', ['Panas', 'Dingin'])->count(),
                 ];
             }
         }

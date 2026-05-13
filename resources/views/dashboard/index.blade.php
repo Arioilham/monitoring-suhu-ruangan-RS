@@ -1,6 +1,6 @@
 @extends('layouts.main')
 
-@section('title', 'Dashboard - Sistem Monitoring Suhu Bayi')
+@section('title', 'Dashboard - Sistem Monitoring Suhu Ruangan Bayi')
 
 @section('content')
 
@@ -56,6 +56,19 @@
 <div class="row" id="devicesContainer">
     @forelse($devices as $device)
     <div class="col-12 mb-4 device-monitor" data-device-id="{{ $device->id }}">
+        @php
+            $monitoring = $device->monitorings->first();
+            
+            // Check if device is connected (last data within 15 seconds)
+            $is_connected = false;
+            if ($monitoring) {
+                $dbNow = \DB::selectOne('SELECT NOW() as db_time');
+                $serverTime = new \DateTime($dbNow->db_time);
+                $diff = $serverTime->diff($monitoring->recorded_at);
+                $secondsAgo = ($diff->days * 86400) + ($diff->h * 3600) + ($diff->i * 60) + $diff->s;
+                $is_connected = $secondsAgo <= 15;
+            }
+        @endphp
         <div class="row">
             <!-- Kolom Kiri: Kartu Status Ruangan -->
             <div class="col-lg-4 mb-4 mb-lg-0">
@@ -63,8 +76,17 @@
             <div class="card-header border-0 py-3">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-door-closed me-2 text-white-50"></i>{{ $device->device_name }}</h5>
-                    <span class="badge rounded-pill device-status-badge {{ $device->monitorings->count() > 0 && $device->monitorings->first()->status === 'Aman' ? 'bg-success' : 'bg-danger' }} border border-light">
-                        <span class="device-status-text">{{ $device->monitorings->count() > 0 ? $device->monitorings->first()->status : 'No Data' }}</span>
+                    @php
+                        $latestStatus = ($monitoring && $is_connected) ? $monitoring->status : 'OFFLINE';
+                        $statusBadgeClass = 'bg-secondary';
+                        if ($is_connected) {
+                            if ($latestStatus === 'Aman') $statusBadgeClass = 'bg-success';
+                            elseif ($latestStatus === 'Panas') $statusBadgeClass = 'bg-danger';
+                            elseif ($latestStatus === 'Dingin') $statusBadgeClass = 'bg-primary';
+                        }
+                    @endphp
+                    <span class="badge rounded-pill device-status-badge {{ $statusBadgeClass }} border border-light">
+                        <span class="device-status-text">{{ $latestStatus }}</span>
                     </span>
                 </div>
                 <small class="text-white-50"><i class="fas fa-map-marker-alt"></i> {{ $device->location }}</small>
@@ -86,31 +108,18 @@
                 </div>
 
                 @php
-                    $monitoring = $device->monitorings->first();
-                    
-                    // Check if device is connected (last data within 15 seconds)
-                    $is_connected = false;
-                    if ($monitoring) {
-                        $dbNow = \DB::selectOne('SELECT NOW() as db_time');
-                        $serverTime = new \DateTime($dbNow->db_time);
-                        $diff = $serverTime->diff($monitoring->recorded_at);
-                        $secondsAgo = ($diff->days * 86400) + ($diff->h * 3600) + ($diff->i * 60) + $diff->s;
-                        $is_connected = $secondsAgo <= 15;
-                    }
-
                     // Only show values if connected
                     $temperature = ($monitoring && $is_connected) ? $monitoring->temperature : 0;
                     $humidity = ($monitoring && $is_connected) ? $monitoring->humidity : 0;
-                    $status = ($monitoring && $is_connected) ? $monitoring->status : 'OFFLINE';
                 @endphp
 
                 <div class="row text-center mb-4">
                     <div class="col-6 border-end">
                         <div class="text-muted mb-1" style="font-size: 0.85rem;"><i class="fas fa-temperature-half me-1"></i>Suhu</div>
                         <div class="temp-display device-temperature">
-                            <span id="temp-val-{{ $device->id }}" class="device-temp-value fw-bold" style="font-size:2.2rem; color:{{ ($temperature <= 29 || $temperature >= 31) && $monitoring ? '#dc3545' : ($monitoring ? '#198754' : '#6c757d') }};">
+                            <span id="temp-val-{{ $device->id }}" class="device-temp-value fw-bold" style="font-size:2.2rem; color:{{ $monitoring && in_array($monitoring->status, ['Panas', 'Dingin']) ? '#dc3545' : ($monitoring ? '#198754' : '#6c757d') }};">
                                 {{ $monitoring ? number_format($temperature, 1) : '0' }}
-                            </span><span class="fs-5" style="color:{{ ($temperature <= 29 || $temperature >= 31) && $monitoring ? '#dc3545' : ($monitoring ? '#198754' : '#6c757d') }};">°C</span>
+                            </span><span class="fs-5" style="color:{{ $monitoring && in_array($monitoring->status, ['Panas', 'Dingin']) ? '#dc3545' : ($monitoring ? '#198754' : '#6c757d') }};">°C</span>
                         </div>
                         <div class="mt-1">
                             <span class="badge bg-light text-secondary border"><i class="fas fa-info-circle"></i> 29.1 - 30.9 °C</span>
@@ -202,7 +211,7 @@
                     <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center gap-2">
-                                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-chart-area text-primary me-2"></i> Grafik Suhu & Kelembapan</h5>
+                                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-chart-area text-primary me-2"></i> Grafik Kondisi Ruangan</h5>
                                 <span class="chart-live-badge live-badge offline"><span class="live-dot disconnected" style="width:7px;height:7px;margin:0;"></span> OFFLINE</span>
                             </div>
                             <div>
@@ -253,7 +262,7 @@
 <div class="row mb-4">
     <div class="col-md-4 col-sm-6 mb-3">
         <div class="card h-100 border-0 shadow-sm rounded-4 position-relative overflow-hidden">
-            <div class="position-absolute top-0 start-0 w-100" style="height: 4px; background: linear-gradient(90deg, #10b981, #34d399);"></div>
+            <div class="position-absolute top-0 inset-s-0 w-100" style="height: 4px; background: linear-gradient(90deg, #10b981, #34d399);"></div>
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -273,7 +282,7 @@
     
     <div class="col-md-4 col-sm-6 mb-3">
         <div class="card h-100 border-0 shadow-sm rounded-4 position-relative overflow-hidden">
-            <div class="position-absolute top-0 start-0 w-100" style="height: 4px; background: linear-gradient(90deg, #ef4444, #f87171);"></div>
+            <div class="position-absolute top-0 inset-s-0 w-100" style="height: 4px; background: linear-gradient(90deg, #ef4444, #f87171);"></div>
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -297,7 +306,7 @@
 
     <div class="col-md-4 col-sm-12 mb-3">
         <div class="card h-100 border-0 shadow-sm rounded-4 position-relative overflow-hidden">
-            <div class="position-absolute top-0 start-0 w-100" style="height: 4px; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
+            <div class="position-absolute top-0 inset-s-0 w-100" style="height: 4px; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -805,7 +814,9 @@ function updateDeviceUI(device) {
         const tempStr  = isConnected ? tempNum.toFixed(1) : '0';
         const tempEl   = document.getElementById(`temp-val-${device.id}`);
         const tempColor = !isConnected ? C_OFFLINE
-            : (tempNum <= 29 || tempNum >= 31) ? C_DANGER : C_SUCCESS;
+            : (tempNum >= 31) ? C_DANGER // Panas
+            : (tempNum <= 29) ? '#0d6efd' // Dingin (Bootstrap Primary Blue)
+            : C_SUCCESS;
 
         if (tempEl) {
             tempEl.textContent = tempStr;
@@ -835,10 +846,24 @@ function updateDeviceUI(device) {
     // ---- 4. Status badge ----
     const sBadge = card.querySelector('.device-status-badge');
     const sText  = card.querySelector('.device-status-text');
-    if (sBadge && sText && device.status) {
-        sText.textContent = device.status;
-        sBadge.classList.toggle('badge-aman',       device.status === 'Aman');
-        sBadge.classList.toggle('badge-tidak-aman', device.status !== 'Aman');
+    if (sBadge && sText) {
+        const displayStatus = isConnected ? (device.status || 'No Data') : 'OFFLINE';
+        sText.textContent = displayStatus;
+        
+        // Reset classes
+        sBadge.classList.remove('bg-success', 'bg-danger', 'bg-primary', 'bg-secondary');
+        
+        if (!isConnected) {
+            sBadge.classList.add('bg-secondary');
+        } else if (displayStatus === 'Aman') {
+            sBadge.classList.add('bg-success');
+        } else if (displayStatus === 'Panas') {
+            sBadge.classList.add('bg-danger');
+        } else if (displayStatus === 'Dingin') {
+            sBadge.classList.add('bg-primary');
+        } else {
+            sBadge.classList.add('bg-secondary');
+        }
     }
 
     // ---- 5. Kipas & Penghangat ----

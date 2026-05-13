@@ -90,8 +90,8 @@ class ReportController extends Controller
 
         $device = Device::findOrFail($validated['device_id']);
         $date = Carbon::parse($validated['month'] . '-01');
-        $startDate = $date->startOfMonth();
-        $endDate = $date->endOfMonth();
+        $startDate = $date->copy()->startOfMonth();
+        $endDate = $date->copy()->endOfMonth();
 
         $monitorings = Monitoring::where('device_id', $device->id)
             ->whereBetween('recorded_at', [$startDate, $endDate])

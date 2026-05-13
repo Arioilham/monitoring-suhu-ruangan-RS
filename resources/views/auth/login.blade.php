@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistem Monitoring Suhu Bayi</title>
+    <title>Login - Sistem Monitoring Suhu Ruangan Bayi</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Google Fonts -->
@@ -445,7 +445,7 @@
                 <div class="logo-icon">
                     <i class="fas fa-heartbeat"></i>
                 </div>
-                <h1>Monitoring Bayi</h1>
+                <h1>Monitoring Ruangan Bayi</h1>
                 <p>Sistem Monitoring Suhu & Kelembapan Ruang Perawatan</p>
             </div>
 

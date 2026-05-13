@@ -93,7 +93,11 @@
                         </span>
                     </td>
                     <td>
-                        <span class="badge bg-danger">{{ $emergency->status }}</span>
+                        @if($emergency->status === 'Panas')
+                            <span class="badge bg-danger">Panas</span>
+                        @else
+                            <span class="badge bg-primary">Dingin</span>
+                        @endif
                     </td>
                     <td>
                         <a href="{{ route('monitoring.history', ['device_id' => $emergency->device_id, 'start_date' => $emergency->recorded_at->format('Y-m-d')]) }}" 

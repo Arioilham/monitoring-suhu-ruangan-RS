@@ -1,60 +1,198 @@
 @extends('layouts.main')
 
-@section('title', 'Riwayat Monitoring - Sistem Monitoring Suhu Bayi')
+@section('title', 'Riwayat Monitoring - Sistem Monitoring Suhu Ruangan Bayi')
 
 @section('content')
+@php
+    // Calculate statistics for the selected period
+    $avgTemp = $allData->count() > 0 ? round($allData->avg('temperature'), 1) : '--';
+    $maxTemp = $allData->count() > 0 ? round($allData->max('temperature'), 1) : '--';
+    $minTemp = $allData->count() > 0 ? round($allData->min('temperature'), 1) : '--';
+    $avgHumidity = $allData->count() > 0 ? round($allData->avg('humidity'), 0) : '--';
+@endphp
+
+<div class="row mb-4">
+<!-- PAGE HEADER (THE BAR) -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="d-flex align-items-center">
-            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
-                <i class="fas fa-history fs-4"></i>
-            </div>
-            <div>
-                <h1 class="h3 mb-0 fw-bold text-dark">Riwayat Monitoring</h1>
-                <p class="text-muted mb-0" style="font-size: 0.85rem;">Lihat dan filter data pemantauan ruangan dari waktu ke waktu</p>
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                    <i class="fas fa-history fs-4"></i>
+                </div>
+                <div>
+                    <h1 class="h3 mb-0 fw-bold text-dark">Riwayat & Analisis Monitoring</h1>
+                    <p class="text-muted mb-0" style="font-size: 0.85rem;">Log data detail dan analisis statistik kondisi ruangan</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Filter -->
+<!-- 1. FILTER SECTION (Langsung di bawah Bar Judul) -->
 <div class="card mb-4 border-0 shadow-sm rounded-4">
     <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
-        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-filter text-primary me-2"></i> Filter Data</h5>
+        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-filter text-primary me-2"></i> Filter & Pencarian Data</h5>
     </div>
     <div class="card-body p-4">
         <form method="GET" action="{{ route('monitoring.history') }}" class="row g-3">
-            <!-- Hidden device_id since only 1 room exists -->
             <input type="hidden" name="device_id" value="{{ $selectedDevice }}">
-            <div class="col-md-2">
-                <label for="start_date" class="form-label">Tanggal Mulai</label>
-                <input type="date" name="start_date" id="start_date" class="form-control" value="{{ $startDate }}">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label small fw-bold">Rentang Tanggal</label>
+                <div class="input-group">
+                    <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
+                    <span class="input-group-text">s/d</span>
+                    <input type="date" name="end_date" class="form-control" value="{{ $endDate }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label small fw-bold">Filter Status/Tindakan</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="">Semua Kondisi (Normal & Bahaya)</option>
+                    <option value="Panas" {{ $status == 'Panas' ? 'selected' : '' }}>🚨 Kondisi Panas (Butuh Tindakan)</option>
+                    <option value="Dingin" {{ $status == 'Dingin' ? 'selected' : '' }}>❄️ Kondisi Dingin (Butuh Tindakan)</option>
+                    <option value="Aman" {{ $status == 'Aman' ? 'selected' : '' }}>✅ Kondisi Aman</option>
+                </select>
             </div>
             <div class="col-md-2">
-                <label for="start_time" class="form-label">Jam Mulai</label>
-                <input type="time" name="start_time" id="start_time" class="form-control" value="{{ $startTime }}">
+                <label for="temperature" class="form-label small fw-bold">Cari Suhu (°C)</label>
+                <input type="number" step="0.1" name="temperature" id="temperature" class="form-control" placeholder="Contoh: 30" value="{{ $temperature }}">
             </div>
-            <div class="col-md-2">
-                <label for="end_date" class="form-label">Tanggal Akhir</label>
-                <input type="date" name="end_date" id="end_date" class="form-control" value="{{ $endDate }}">
-            </div>
-            <div class="col-md-2">
-                <label for="end_time" class="form-label">Jam Akhir</label>
-                <input type="time" name="end_time" id="end_time" class="form-control" value="{{ $endTime }}">
-            </div>
-            <div class="col-md-1 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100" style="border-radius: 10px; padding: 10px 14px;">
-                    <i class="fas fa-search"></i>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary grow w-100" style="border-radius: 10px; padding: 10px 14px;">
+                    <i class="fas fa-search me-1"></i> Terapkan Filter
                 </button>
+                <a href="{{ route('monitoring.history') }}" class="btn btn-light border" style="border-radius: 10px; padding: 10px 14px;" title="Reset Filter">
+                    <i class="fas fa-sync-alt"></i>
+                </a>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Data Table -->
+<!-- 2. STATISTICS CARDS -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="grow">
+                        <small class="text-muted d-block fw-bold mb-1">RATA-RATA SUHU</small>
+                        <h3 class="mb-0 fw-bold text-danger">{{ $avgTemp }}°C</h3>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3">
+                        <i class="fas fa-thermometer-half fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="grow">
+                        <small class="text-muted d-block fw-bold mb-1">SUHU MAKSIMAL</small>
+                        <h3 class="mb-0 fw-bold text-danger">{{ $maxTemp }}°C</h3>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3">
+                        <i class="fas fa-arrow-up fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="grow">
+                        <small class="text-muted d-block fw-bold mb-1">SUHU MINIMAL</small>
+                        <h3 class="mb-0 fw-bold text-danger">{{ $minTemp }}°C</h3>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3">
+                        <i class="fas fa-arrow-down fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="grow">
+                        <small class="text-muted d-block fw-bold mb-1">RATA-RATA KELEMBAPAN</small>
+                        <h3 class="mb-0 fw-bold text-primary">{{ $avgHumidity }}%</h3>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3">
+                        <i class="fas fa-tint fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. ANALYSIS CHART -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white border-0 pt-4 px-4">
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-chart-area text-primary me-2"></i> Grafik Fluktuasi Kondisi Ruangan (Trend Per Jam)</h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div id="hourlyChart" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hourly Summary Table (From Data Harian) -->
+<div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-transparent border-0 pt-4 pb-2 px-4">
+        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-clock text-primary me-2"></i> Ringkasan Kondisi Per Jam</h5>
+    </div>
+    <div class="card-body px-0 pt-0">
+        <div class="table-responsive px-4">
+            <table class="table table-hover mb-0 table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Jam</th>
+                        <th>Rata-rata Suhu</th>
+                        <th>Min - Max Suhu</th>
+                        <th>Rata-rata Kelembapan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($hourlyData as $data)
+                    <tr>
+                        <td class="fw-bold">{{ sprintf('%02d', $data->hour) }}:00</td>
+                        <td>
+                            <span class="text-danger fw-bold">{{ number_format($data->avg_temp, 1) }}°C</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ number_format($data->min_temp, 1) }}°C - {{ number_format($data->max_temp, 1) }}°C</small>
+                        </td>
+                        <td>
+                            <span class="text-primary fw-bold">{{ number_format($data->avg_humidity, 0) }}%</span>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="4" class="text-center py-3 text-muted">Belum ada data agregasi per jam</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Raw Logs Table -->
 <div class="card border-0 shadow-sm rounded-4">
     <div class="card-header bg-transparent border-0 pt-4 pb-2 px-4">
-        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-table text-primary me-2"></i> Data Monitoring</h5>
+        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-table text-primary me-2"></i> Log Monitoring Detail (Per 10 Detik)</h5>
     </div>
     <div class="card-body px-0 pt-0">
     <div class="table-responsive px-4">
@@ -72,7 +210,7 @@
             </thead>
             <tbody>
                 @forelse($monitorings as $monitoring)
-                <tr class="{{ $monitoring->status === 'Tidak Aman' ? 'table-danger' : '' }}">
+                <tr class="{{ in_array($monitoring->status, ['Panas', 'Dingin']) ? 'table-danger' : '' }}">
                     <td>
                         <span class="badge px-2 py-1 rounded-2" style="background-color: {{ $monitoring->temperature < 28 || $monitoring->temperature > 30 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)' }}; color: {{ $monitoring->temperature < 28 || $monitoring->temperature > 30 ? '#ef4444' : '#10b981' }}; border: 1px solid {{ $monitoring->temperature < 28 || $monitoring->temperature > 30 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)' }}">
                             {{ number_format($monitoring->temperature, 2) }}
@@ -84,9 +222,13 @@
                         </span>
                     </td>
                     <td>
-                        <span class="badge {{ $monitoring->status === 'Aman' ? 'bg-success' : 'bg-danger' }}">
-                            {{ $monitoring->status }}
-                        </span>
+                        @if($monitoring->status === 'Aman')
+                            <span class="badge bg-success">Aman</span>
+                        @elseif($monitoring->status === 'Panas')
+                            <span class="badge bg-danger">Panas</span>
+                        @elseif($monitoring->status === 'Dingin')
+                            <span class="badge bg-primary">Dingin</span>
+                        @endif
                     </td>
                     <td>
                         @php
@@ -108,7 +250,7 @@
                         @else
                             <small class="text-secondary">-</small>
                         @endif
-                        @if($monitoring->status === 'Tidak Aman' && auth()->user()->role !== 'public')
+                        @if(in_array($monitoring->status, ['Panas', 'Dingin']) && auth()->user()->role !== 'public')
                             <button class="btn btn-xs btn-warning" data-bs-toggle="modal" data-bs-target="#actionModal{{ $monitoring->id }}">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -150,7 +292,7 @@
 
 <!-- Modals for Action Notes -->
 @foreach($monitorings as $monitoring)
-    @if($monitoring->status === 'Tidak Aman')
+    @if(in_array($monitoring->status, ['Panas', 'Dingin']))
         <!-- Action Modal -->
         <div class="modal fade" id="actionModal{{ $monitoring->id }}" tabindex="-1" aria-labelledby="actionModalLabel{{ $monitoring->id }}" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -197,7 +339,13 @@
                         <tr><td class="text-muted fw-semibold">Suhu</td><td>: {{ $monitoring->temperature }} °C</td></tr>
                         <tr><td class="text-muted fw-semibold">Kelembapan</td><td>: {{ $monitoring->humidity }} %</td></tr>
                         <tr><td class="text-muted fw-semibold">Status</td><td>: 
-                            <span class="badge {{ $monitoring->status === 'Aman' ? 'bg-success' : 'bg-danger' }}">{{ $monitoring->status }}</span>
+                            @if($monitoring->status === 'Aman')
+                                <span class="badge bg-success">Aman</span>
+                            @elseif($monitoring->status === 'Panas')
+                                <span class="badge bg-danger">Panas</span>
+                            @elseif($monitoring->status === 'Dingin')
+                                <span class="badge bg-primary">Dingin</span>
+                            @endif
                         </td></tr>
                         <tr><td class="text-muted fw-semibold">Waktu</td><td>: {{ $monitoring->recorded_at->format('d M Y, H:i:s') }}</td></tr>
                     </table>
@@ -262,10 +410,73 @@
         margin-bottom: 0 !important;
     }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.46.0/dist/apexcharts.min.js"></script>
 <script>
     // Pindahkan semua modal ke body untuk menghindari bug z-index & backdrop
     document.querySelectorAll('.modal').forEach(function(modal) {
         document.body.appendChild(modal);
+    });
+
+    // ============ APEXCHARTS HOURLY TREND LOGIC ============
+    document.addEventListener('DOMContentLoaded', function() {
+        const hourlyData = @json($hourlyData);
+        
+        if (!hourlyData || hourlyData.length === 0) {
+            document.getElementById('hourlyChart').innerHTML = '<div class="d-flex align-items-center justify-content-center h-100 text-muted">Belum ada data untuk grafik analisis</div>';
+            return;
+        }
+
+        const labels = hourlyData.map(d => (String(d.hour).padStart(2, '0')) + ':00');
+        const avgTemps = hourlyData.map(d => parseFloat(d.avg_temp) || 0);
+        const avgHumidities = hourlyData.map(d => parseFloat(d.avg_humidity) || 0);
+
+        const options = {
+            chart: {
+                type: 'area',
+                height: 350,
+                fontFamily: 'Inter, sans-serif',
+                toolbar: { show: true },
+                zoom: { enabled: true }
+            },
+            colors: ['#ef4444', '#0d6efd'],
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 3 },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.3,
+                    opacityTo: 0.05,
+                    stops: [0, 90, 100]
+                }
+            },
+            series: [
+                { name: 'Suhu (°C)', data: avgTemps },
+                { name: 'Kelembapan (%)', data: avgHumidities }
+            ],
+            xaxis: {
+                categories: labels,
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            },
+            yaxis: [
+                {
+                    title: { text: 'Suhu (°C)', style: { color: '#ef4444', fontWeight: 600 } },
+                    labels: { style: { colors: '#ef4444' } }
+                },
+                {
+                    opposite: true,
+                    title: { text: 'Kelembapan (%)', style: { color: '#0d6efd', fontWeight: 600 } },
+                    labels: { style: { colors: '#0d6efd' } }
+                }
+            ],
+            tooltip: { shared: true, theme: 'light' },
+            grid: { borderColor: '#f1f1f1', strokeDashArray: 4 },
+            legend: { position: 'top', horizontalAlign: 'right' }
+        };
+
+        const chart = new ApexCharts(document.querySelector("#hourlyChart"), options);
+        chart.render();
     });
 </script>
 @endsection

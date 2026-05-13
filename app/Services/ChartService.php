@@ -287,49 +287,71 @@ class ChartService
         }
 
         $safeCount = $monitorings->where('status', 'Aman')->count();
-        $unsafeCount = $monitorings->where('status', 'Tidak Aman')->count();
+        $hotCount = $monitorings->where('status', 'Panas')->count();
+        $coldCount = $monitorings->where('status', 'Dingin')->count();
 
-        return self::generatePieChart($safeCount, $unsafeCount);
+        return self::generatePieChart($safeCount, $hotCount, $coldCount);
     }
 
     /**
      * Generate pie chart for status
      */
-    private static function generatePieChart($safe, $unsafe)
+    private static function generatePieChart($safe, $hot, $cold)
     {
-        $total = $safe + $unsafe;
+        $total = $safe + $hot + $cold;
 
         if ($total == 0) {
             return '';
         }
 
         $safePercent = ($safe / $total) * 100;
-        $unsafePercent = ($unsafe / $total) * 100;
+        $hotPercent = ($hot / $total) * 100;
+        $coldPercent = ($cold / $total) * 100;
 
-        $width = 300;
-        $height = 300;
+        $width = 400;
+        $height = 400;
         $image = imagecreatetruecolor($width, $height);
 
         $white = imagecolorallocate($image, 255, 255, 255);
-        $black = imagecolorallocate($image, 0, 0, 0);
-        $green = imagecolorallocate($image, 40, 167, 69);
-        $red = imagecolorallocate($image, 220, 53, 69);
+        $black = imagecolorallocate($image, 33, 37, 41);
+        $green = imagecolorallocate($image, 25, 135, 84);    // bg-success
+        $red = imagecolorallocate($image, 220, 53, 69);     // bg-danger
+        $blue = imagecolorallocate($image, 13, 110, 253);    // bg-primary
 
         imagefilledrectangle($image, 0, 0, $width, $height, $white);
 
         $centerX = $width / 2;
-        $centerY = $height / 2;
-        $radius = 80;
+        $centerY = $height / 2 - 20;
+        $radius = 120;
 
         // Draw pie slices
-        $safeAngle = ($safePercent / 100) * 360;
-        imagefilledarc($image, $centerX, $centerY, $radius * 2, $radius * 2, 0, $safeAngle, $green, IMG_ARC_PIE);
-        imagefilledarc($image, $centerX, $centerY, $radius * 2, $radius * 2, $safeAngle, 360, $red, IMG_ARC_PIE);
+        $currentAngle = 0;
+        
+        // Aman
+        if ($safe > 0) {
+            $safeAngle = ($safePercent / 100) * 360;
+            imagefilledarc($image, $centerX, $centerY, $radius * 2, $radius * 2, $currentAngle, $currentAngle + $safeAngle, $green, IMG_ARC_PIE);
+            $currentAngle += $safeAngle;
+        }
+        
+        // Panas
+        if ($hot > 0) {
+            $hotAngle = ($hotPercent / 100) * 360;
+            imagefilledarc($image, $centerX, $centerY, $radius * 2, $radius * 2, $currentAngle, $currentAngle + $hotAngle, $red, IMG_ARC_PIE);
+            $currentAngle += $hotAngle;
+        }
+        
+        // Dingin
+        if ($cold > 0) {
+            $coldAngle = ($coldPercent / 100) * 360;
+            imagefilledarc($image, $centerX, $centerY, $radius * 2, $radius * 2, $currentAngle, $currentAngle + $coldAngle, $blue, IMG_ARC_PIE);
+        }
 
         // Add labels
-        imagestring($image, 2, $centerX - 40, 30, 'Status Distribusi', $black);
-        imagestring($image, 2, $centerX - 50, $centerY + 120, 'Aman: ' . $safe . ' (' . round($safePercent, 1) . '%)', $green);
-        imagestring($image, 2, $centerX - 50, $centerY + 135, 'Tidak Aman: ' . $unsafe . ' (' . round($unsafePercent, 1) . '%)', $red);
+        imagestring($image, 4, $centerX - 70, 10, 'Status Distribusi', $black);
+        imagestring($image, 2, 40, $height - 80, 'Aman: ' . $safe . ' (' . round($safePercent, 1) . '%)', $green);
+        imagestring($image, 2, 40, $height - 60, 'Panas: ' . $hot . ' (' . round($hotPercent, 1) . '%)', $red);
+        imagestring($image, 2, 40, $height - 40, 'Dingin: ' . $cold . ' (' . round($coldPercent, 1) . '%)', $blue);
 
         $path = storage_path('app/public/charts/');
         if (!is_dir($path)) {

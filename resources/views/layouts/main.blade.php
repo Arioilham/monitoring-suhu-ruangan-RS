@@ -1032,7 +1032,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark" style="position: sticky; top: 0; z-index: 1000;">
         <div class="container-fluid">
             <a class="navbar-brand text-white fw-bold" href="{{ route('dashboard') }}">
-                <i class="fas fa-heartbeat text-white me-2"></i> Monitoring Bayi
+                <i class="fas fa-heartbeat text-white me-2"></i> Monitoring Ruangan Bayi
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -1050,16 +1050,6 @@
                     <li class="nav-item d-md-none">
                         <a class="nav-link {{ request()->routeIs('monitoring.history') ? 'active' : '' }}" href="{{ route('monitoring.history') }}">
                             <i class="fas fa-history"></i> Riwayat
-                        </a>
-                    </li>
-                    <li class="nav-item d-md-none">
-                        <a class="nav-link {{ request()->routeIs('monitoring.chart') ? 'active' : '' }}" href="{{ route('monitoring.chart') }}">
-                            <i class="fas fa-chart-area"></i> Grafik
-                        </a>
-                    </li>
-                    <li class="nav-item d-md-none">
-                        <a class="nav-link {{ request()->routeIs('monitoring.hourly-trend') ? 'active' : '' }}" href="{{ route('monitoring.hourly-trend') }}">
-                            <i class="fas fa-chart-simple"></i> Data Harian
                         </a>
                     </li>
                     <li class="nav-item d-md-none">
@@ -1202,16 +1192,6 @@
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('monitoring.history') ? 'active' : '' }}" href="{{ route('monitoring.history') }}">
                                 <i class="fas fa-history"></i> Riwayat
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('monitoring.chart') ? 'active' : '' }}" href="{{ route('monitoring.chart') }}">
-                                <i class="fas fa-chart-area"></i> Grafik
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('monitoring.hourly-trend') ? 'active' : '' }}" href="{{ route('monitoring.hourly-trend') }}">
-                                <i class="fas fa-chart-simple"></i> Data Harian
                             </a>
                         </li>
                         <li class="nav-item">

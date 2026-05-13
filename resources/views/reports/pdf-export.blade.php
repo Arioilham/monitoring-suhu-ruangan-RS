@@ -288,9 +288,14 @@
             color: #0f5132;
         }
 
-        .badge-tidak-aman {
+        .badge-panas {
             background-color: #f8d7da;
             color: #842029;
+        }
+
+        .badge-dingin {
+            background-color: #cfe2ff;
+            color: #084298;
         }
 
         /* ===== SLIDE 5: NOTES PAGE ===== */
@@ -532,13 +537,19 @@
                 </div>
 
                 <div class="summary-card">
-                    <div class="summary-card-label">Status Tidak Aman</div>
-                    <div class="summary-card-value" style="color: #dc3545;">{{ $summary['unsafe_count'] ?? 0 }}</div>
+                    <div class="summary-card-label">Status Panas</div>
+                    <div class="summary-card-value" style="color: #dc3545;">{{ $summary['hot_count'] ?? 0 }}</div>
                     <div class="summary-card-unit">Kejadian</div>
                 </div>
 
                 <div class="summary-card">
-                    <div class="summary-card-label">% Kejadian Tidak Aman</div>
+                    <div class="summary-card-label">Status Dingin</div>
+                    <div class="summary-card-value" style="color: #0d6efd;">{{ $summary['cold_count'] ?? 0 }}</div>
+                    <div class="summary-card-unit">Kejadian</div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-card-label">% Tidak Normal</div>
                     <div class="summary-card-value">{{ $summary['unsafe_percentage'] ?? 0 }}</div>
                     <div class="summary-card-unit">%</div>
                 </div>
@@ -614,9 +625,13 @@
                         <td style="text-align: center; font-weight: 600;">{{ round($monitoring->humidity, 2) }}</td>
                         <td style="text-align: center;">
                             @if($monitoring->status === 'Aman')
-                            <span class="status-badge badge-aman">Aman</span>
+                                <span class="status-badge badge-aman">Aman</span>
+                            @elseif($monitoring->status === 'Panas')
+                                <span class="status-badge badge-panas">Panas</span>
+                            @elseif($monitoring->status === 'Dingin')
+                                <span class="status-badge badge-dingin">Dingin</span>
                             @else
-                            <span class="status-badge badge-tidak-aman">Tidak Aman</span>
+                                <span class="status-badge">{{ $monitoring->status }}</span>
                             @endif
                         </td>
                         <td>{{ substr($monitoring->action_note ?? '-', 0, 50) }}</td>

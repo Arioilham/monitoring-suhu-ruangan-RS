@@ -52,7 +52,9 @@ class ExcelExportService
     private static function generateSummary(Device $device, Collection $monitorings, Carbon $startDate, Carbon $endDate): array
     {
         $safeCount = $monitorings->where('status', 'Aman')->count();
-        $unsafeCount = $monitorings->where('status', 'Tidak Aman')->count();
+        $hotCount = $monitorings->where('status', 'Panas')->count();
+        $coldCount = $monitorings->where('status', 'Dingin')->count();
+        $unsafeCount = $hotCount + $coldCount;
         $avgResponseTime = $monitorings->whereNotNull('response_time_minutes')->avg('response_time_minutes');
 
         return [
@@ -67,6 +69,8 @@ class ExcelExportService
             'min_humidity' => $monitorings->min('humidity') ?? 0,
             'avg_humidity' => round($monitorings->avg('humidity') ?? 0, 2),
             'safe_count' => $safeCount,
+            'hot_count' => $hotCount,
+            'cold_count' => $coldCount,
             'unsafe_count' => $unsafeCount,
             'unsafe_percentage' => $unsafeCount > 0 ? round(($unsafeCount / ($safeCount + $unsafeCount)) * 100, 2) : 0,
             'avg_response_time' => $avgResponseTime ? round($avgResponseTime, 2) : 0,
@@ -177,8 +181,10 @@ class ExcelExportData implements FromArray, WithStyles
         $this->sectionHeaderRows[] = $this->rowCounter; $this->rowCounter++;
         
         $data[] = ['Aman:', $this->summary['safe_count'], '', '', '', '', '']; $this->rowCounter++;
-        $data[] = ['Tidak Aman:', $this->summary['unsafe_count'], '', '', '', '', '']; $this->rowCounter++;
-        $data[] = ['Persentase Tidak Aman:', $this->summary['unsafe_percentage'] . '%', '', '', '', '', '']; $this->rowCounter++;
+        $data[] = ['Panas (Tinggi):', $this->summary['hot_count'], '', '', '', '', '']; $this->rowCounter++;
+        $data[] = ['Dingin (Rendah):', $this->summary['cold_count'], '', '', '', '', '']; $this->rowCounter++;
+        $data[] = ['Total Tidak Normal:', $this->summary['unsafe_count'], '', '', '', '', '']; $this->rowCounter++;
+        $data[] = ['Persentase Tidak Normal:', $this->summary['unsafe_percentage'] . '%', '', '', '', '', '']; $this->rowCounter++;
         $data[] = ['Rata-rata Waktu Respons:', $this->summary['avg_response_time'] . ' menit', '', '', '', '', '']; $this->rowCounter++;
         $data[] = ['', '', '', '', '', '', '']; $this->rowCounter++;
 

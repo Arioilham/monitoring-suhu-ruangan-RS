@@ -15,11 +15,17 @@ class MonitoringController extends Controller
     public function history(Request $request)
     {
         $devices = Device::all();
-        $selectedDevice = $request->get('device_id');
-        $startDate = $request->get('start_date');
-        $endDate = $request->get('end_date');
+        $selectedDevice = $request->get('device_id', $devices->first()->id ?? null);
+        
+        // Gunakan filled() atau check manual agar jika kosong tetap ke Today
+        $startDate = $request->filled('start_date') ? $request->get('start_date') : Carbon::today()->format('Y-m-d');
+        $endDate = $request->filled('end_date') ? $request->get('end_date') : Carbon::today()->format('Y-m-d');
+        
         $startTime = $request->get('start_time');
         $endTime = $request->get('end_time');
+        $temperature = $request->get('temperature');
+        $humidity = $request->get('humidity');
+        $status = $request->get('status');
 
         $query = Monitoring::with('device');
 
@@ -43,9 +49,44 @@ class MonitoringController extends Controller
             $query->where('recorded_at', '<=', $endDateTime);
         }
 
+        if ($temperature !== null && $temperature !== '') {
+            $query->where('temperature', '>=', $temperature)
+                  ->where('temperature', '<', $temperature + 1);
+        }
+
+        if ($humidity !== null && $humidity !== '') {
+            $query->where('humidity', '>=', $humidity)
+                  ->where('humidity', '<', $humidity + 1);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // Clone query for statistics before pagination
+        $statsQuery = clone $query;
+        $allData = $statsQuery->get();
+
+        // Calculate Hourly Data for Chart (System like Data Harian)
+        $hourlyData = Monitoring::getHourlyData($selectedDevice, Carbon::parse($startDate));
+        
+        // Paginate raw logs
         $monitorings = $query->latest('recorded_at')->paginate(50);
 
-        return view('monitoring.history', compact('monitorings', 'devices', 'selectedDevice', 'startDate', 'endDate', 'startTime', 'endTime'));
+        return view('monitoring.history', compact(
+            'monitorings', 
+            'devices', 
+            'selectedDevice', 
+            'startDate', 
+            'endDate', 
+            'startTime', 
+            'endTime',
+            'temperature',
+            'humidity',
+            'status',
+            'allData',
+            'hourlyData'
+        ));
     }
 
     /**
@@ -84,7 +125,7 @@ class MonitoringController extends Controller
             $temperatures[] = $monitoring->temperature ?? 0;
             $humidities[] = $monitoring->humidity ?? 0;
             $dates[] = $monitoring->recorded_at->format('H:i:s');
-            $statuses[] = $monitoring->status === 'Tidak Aman' ? 'danger' : 'safe';
+            $statuses[] = in_array($monitoring->status, ['Panas', 'Dingin']) ? 'danger' : 'safe';
         }
 
         $chartData = [

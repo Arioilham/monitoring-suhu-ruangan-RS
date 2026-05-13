@@ -69,7 +69,9 @@ class PdfExportService
     private static function generateSummary(Device $device, Collection $monitorings, Carbon $startDate, Carbon $endDate): array
     {
         $safeCount = $monitorings->where('status', 'Aman')->count();
-        $unsafeCount = $monitorings->where('status', 'Tidak Aman')->count();
+        $hotCount = $monitorings->where('status', 'Panas')->count();
+        $coldCount = $monitorings->where('status', 'Dingin')->count();
+        $unsafeCount = $hotCount + $coldCount;
         $avgResponseTime = $monitorings->whereNotNull('response_time_minutes')->avg('response_time_minutes');
 
         // Get alerts/incidents count
@@ -92,6 +94,8 @@ class PdfExportService
             'min_humidity' => $monitorings->min('humidity') ?? 0,
             'avg_humidity' => round($monitorings->avg('humidity') ?? 0, 2),
             'safe_count' => $safeCount,
+            'hot_count' => $hotCount,
+            'cold_count' => $coldCount,
             'unsafe_count' => $unsafeCount,
             'unsafe_percentage' => $unsafeCount > 0 ? round(($unsafeCount / ($safeCount + $unsafeCount)) * 100, 2) : 0,
             'avg_response_time' => $avgResponseTime ? round($avgResponseTime, 2) : 0,

@@ -36,8 +36,10 @@ class MonitoringController extends Controller
 
         // Determine status based on temperature (align with Arduino)
         $status = 'Aman';
-        if ($request->temperature <= 29 || $request->temperature >= 31) {
-            $status = 'Tidak Aman';
+        if ($request->temperature >= 31) {
+            $status = 'Panas';
+        } elseif ($request->temperature <= 29) {
+            $status = 'Dingin';
         }
 
         $monitoring = Monitoring::create([
@@ -335,14 +337,10 @@ class MonitoringController extends Controller
 
             $tempStatus = 'safe';  // hijau
             if ($latestMonitoring) {
-                if ($latestMonitoring->temperature <= 29) {
-                    $tempStatus = 'warning'; // kuning (terlalu dingin)
-                }
                 if ($latestMonitoring->temperature >= 31) {
-                    $tempStatus = 'warning'; // kuning
-                }
-                if ($latestMonitoring->temperature > 35) {
-                    $tempStatus = 'danger'; // merah
+                    $tempStatus = 'danger'; // Panas
+                } elseif ($latestMonitoring->temperature <= 29) {
+                    $tempStatus = 'primary'; // Dingin
                 }
             }
 

@@ -1,6 +1,6 @@
 @extends('layouts.main')
 
-@section('title', 'Manajemen Device - Sistem Monitoring Suhu Bayi')
+@section('title', 'Manajemen Device - Sistem Monitoring Suhu Ruangan Bayi')
 
 @section('content')
 <div class="row mb-4">

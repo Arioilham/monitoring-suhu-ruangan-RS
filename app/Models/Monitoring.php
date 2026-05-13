@@ -67,7 +67,7 @@ class Monitoring extends Model
      */
     public function getActionRequiredAttribute()
     {
-        return $this->status === 'Tidak Aman';
+        return in_array($this->status, ['Panas', 'Dingin']);
     }
 
     /**
@@ -103,7 +103,7 @@ class Monitoring extends Model
         $fiveMinutesAgo = Carbon::now()->subMinutes(5);
         
         $unsafeCount = self::where('device_id', $deviceId)
-            ->where('status', 'Tidak Aman')
+            ->whereIn('status', ['Panas', 'Dingin'])
             ->where('recorded_at', '>=', $fiveMinutesAgo)
             ->count();
         
@@ -117,7 +117,7 @@ class Monitoring extends Model
     public static function getLatestUnsafeDetails($deviceId)
     {
         return self::where('device_id', $deviceId)
-            ->where('status', 'Tidak Aman')
+            ->whereIn('status', ['Panas', 'Dingin'])
             ->latest('recorded_at')
             ->first();
     }
@@ -130,7 +130,7 @@ class Monitoring extends Model
         $today = Carbon::today();
         
         return self::where('device_id', $deviceId)
-            ->where('status', 'Tidak Aman')
+            ->whereIn('status', ['Panas', 'Dingin'])
             ->whereDate('recorded_at', $today)
             ->count();
     }
