@@ -353,22 +353,6 @@
                 </a>
             </div>
             <div class="col-6 col-md-3 col-lg-2">
-                <a href="{{ route('monitoring.chart') }}" class="text-decoration-none">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-3 hover-lift">
-                        <div class="mb-2"><i class="fas fa-chart-area text-info fs-3"></i></div>
-                        <span class="text-dark fw-bold" style="font-size: 0.85rem;">Grafik</span>
-                    </div>
-                </a>
-            </div>
-            <div class="col-6 col-md-3 col-lg-2">
-                <a href="{{ route('monitoring.hourly-trend') }}" class="text-decoration-none">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-3 hover-lift">
-                        <div class="mb-2"><i class="fas fa-chart-line text-success fs-3"></i></div>
-                        <span class="text-dark fw-bold" style="font-size: 0.85rem;">Data Harian</span>
-                    </div>
-                </a>
-            </div>
-            <div class="col-6 col-md-3 col-lg-2">
                 <a href="{{ route('reports.index') }}" class="text-decoration-none">
                     <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-3 hover-lift">
                         <div class="mb-2"><i class="fas fa-file-pdf text-danger fs-3"></i></div>
